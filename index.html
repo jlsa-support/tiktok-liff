@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>読み込み中...</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .loader {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <p>LINEへ移動しています...</p>
+    </div>
+
+    <script>
+        async function main() {
+            try {
+                // 1. LIFFの初期化 (ご提示いただいたIDを設定済み)
+                await liff.init({ liffId: "2009953120-MCwAaeiX" }); 
+
+                // 2. ログインチェック
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                
+                // 3. ユーザープロフィールの取得
+                const profile = await liff.getProfile();
+                
+                // 4. URLパラメーターからclick_idを取得
+                const urlParams = new URLSearchParams(window.location.search);
+                const clickId = urlParams.get('click_id');
+
+                // 5. TikTok経由のユーザーであればGoogle Cloudサーバーへ紐付けデータを送信
+                if (clickId && profile.userId) {
+                    await fetch('https://tiktok-line-api-191129339681.asia-northeast1.run.app/pair', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            line_user_id: profile.userId,
+                            click_id: clickId
+                        })
+                    });
+                }
+
+                // 6. LINE公式アカウントの追加/トーク画面へ遷移
+                // ※ @ の後にご自身のLINE公式アカウントIDを入れてください（例: @123abcde）
+                // IDが不明な場合は、LINE Official Account Managerの基本設定で確認できます
+                window.location.href = "https://line.me/R/ti/p/@YOUR_LINE_ID";
+
+            } catch (error) {
+                console.error("LIFF Error:", error);
+                // エラー時も念のため公式アカウントへ飛ばす
+                window.location.href = "https://line.me/R/ti/p/@YOUR_LINE_ID";
+            }
+        }
+        main();
+    </script>
+</body>
+</html>
